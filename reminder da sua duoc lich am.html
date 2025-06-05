@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-do & Lịch học</title>
+  <!-- Xóa thư viện lịch âm -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+  <div class="max-w-3xl mx-auto">
+    <!-- Dòng hiển thị ngày âm lịch -->
+    <div class="bg-yellow-50 text-yellow-700 font-medium rounded-t-lg p-2 text-center">
+      <span id="lunarDate">Ngày Âm (ước tính): ...</span>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-lg p-6 rounded-t-none">
+      <!-- Thời gian hiện tại -->
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-blue-600">🕒 <span id="clock">--:--</span> | 📅 <span id="date">--/--/----</span></h1>
+      </div>
+
+      <!-- To-do list -->
+      <h2 class="text-xl font-semibold text-blue-700 mb-2">📋 Danh sách việc cần làm</h2>
+      <div class="flex mb-4 gap-2">
+        <input id="taskInput" type="text" placeholder="Nhập công việc..." class="flex-grow border p-2 rounded" />
+        <button onclick="addTask()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Thêm</button>
+      </div>
+      <ul id="taskList" class="space-y-3 mb-6"></ul>
+
+      <!-- Lịch học -->
+      <h2 class="text-xl font-semibold text-green-700 mb-2">📚 Lịch học / Thời gian biểu</h2>
+      <div class="flex mb-4 gap-2">
+        <input id="scheduleInput" type="text" placeholder="Nhập lịch học (VD: Thứ 2 - Toán 7h)" class="flex-grow border p-2 rounded" />
+        <button onclick="addSchedule()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Thêm</button>
+      </div>
+      <ul id="scheduleList" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Mảng Can Chi đơn giản (chỉ dùng cho năm và giờ)
+    const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+    const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+    const LUNAR_MONTH_DAYS = [0, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29]; // Số ngày ước tính cho các tháng âm
+                                                                                // phần tử 0 không dùng
+
+    // Hàm ước tính lịch âm cực kỳ đơn giản (KHÔNG CHÍNH XÁC)
+    function getSimpleLunarDate(currentDate) {
+        const solarYear = currentDate.getFullYear();
+        const solarMonth = currentDate.getMonth() + 1; // 1-12
+        const solarDay = currentDate.getDate();
+
+        // Mốc giả định: 1/1/2024 Dương lịch là ngày 20/11/Quý Mão Âm lịch
+        // Bạn có thể thay đổi mốc này, nhưng độ chính xác vẫn rất thấp
+        const epochSolarDate = new Date(2024, 0, 1); // 1/1/2024
+        const epochLunarYear = 2023; // Năm Quý Mão
+        const epochLunarMonth = 11;  // Tháng 11 ÂL
+        const epochLunarDay = 20;   // Ngày 20 ÂL
+
+        // Tính số ngày chênh lệch so với mốc
+        const diffTime = currentDate.getTime() - epochSolarDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        // Ước tính ngày tháng năm âm lịch từ mốc
+        // Đây là phần cực kỳ thô sơ và không tính năm nhuận, tháng thiếu/đủ chính xác
+        let estimatedLunarDay = epochLunarDay + diffDays;
+        let estimatedLunarMonth = epochLunarMonth;
+        let estimatedLunarYear = epochLunarYear;
+
+        // Lặp để điều chỉnh tháng và năm
+        // Logic này rất cơ bản và sẽ sai lệch nhiều theo thời gian
+        while (estimatedLunarDay > LUNAR_MONTH_DAYS[estimatedLunarMonth > 12 ? 1 : estimatedLunarMonth] || estimatedLunarDay <= 0) {
+            if (estimatedLunarDay > LUNAR_MONTH_DAYS[estimatedLunarMonth > 12 ? 1 : estimatedLunarMonth]) {
+                estimatedLunarDay -= LUNAR_MONTH_DAYS[estimatedLunarMonth > 12 ? 1 : estimatedLunarMonth];
+                estimatedLunarMonth++;
+                if (estimatedLunarMonth > 12) {
+                    estimatedLunarMonth = 1;
+                    estimatedLunarYear++;
+                }
+            } else { // estimatedLunarDay <= 0
+                estimatedLunarMonth--;
+                if (estimatedLunarMonth < 1) {
+                    estimatedLunarMonth = 12;
+                    estimatedLunarYear--;
+                }
+                estimatedLunarDay += LUNAR_MONTH_DAYS[estimatedLunarMonth];
+            }
+        }
+        
+        // Lấy Can Chi cho năm (cũng là ước tính)
+        // (Năm dương - 3) % 10 -> Can ; (Năm dương - 3) % 12 -> Chi
+        // Số 3 là một hằng số điều chỉnh để phù hợp với cách tính Can Chi truyền thống (ví dụ: Giáp Tý là năm 4)
+        // Hoặc đơn giản hơn:
+        const canYear = CAN[(estimatedLunarYear - 4) % 10];
+        const chiYear = CHI[(estimatedLunarYear - 4) % 12];
+
+
+        return `Ngày ${estimatedLunarDay} tháng ${estimatedLunarMonth} năm ${canYear} ${chiYear}`;
+    }
+
+
+    // ⏰ Hiển thị đồng hồ & ngày tháng
+    function updateClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('vi-VN');
+      const date = now.toLocaleDateString('vi-VN');
+      document.getElementById('clock').innerText = time;
+      document.getElementById('date').innerText = date;
+      
+      // Hiển thị ngày âm lịch "ước tính"
+      try {
+        const lunarDateStr = `Ngày Âm (ước tính): ${getSimpleLunarDate(now)}`;
+        document.getElementById('lunarDate').innerText = lunarDateStr;
+      } catch (e) {
+        document.getElementById('lunarDate').innerText = "Ngày Âm (ước tính): Lỗi";
+        console.error("Lỗi khi ước tính lịch âm:", e);
+      }
+    }
+    setInterval(updateClock, 1000); // Cập nhật mỗi giây
+    // updateClock(); // Gọi lần đầu để hiển thị ngay (đã được gọi trong DOMContentLoaded)
+
+    // 📝 To-do list
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    function renderTasks() {
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      tasks.forEach((task, index) => {
+        const li = document.createElement("li");
+        li.className = "flex justify-between items-center bg-gray-50 border-l-4 p-3 rounded " +
+          (task.done ? "border-green-400" : "border-gray-300");
+
+        li.innerHTML = `
+          <div class="flex items-center gap-2">
+            <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleDone(${index})" />
+            <span class="${task.done ? 'line-through text-gray-400' : ''}">${task.text}</span>
+          </div>
+          <button onclick="deleteTask(${index})" class="text-red-500 hover:underline">🗑️</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function addTask() {
+      const input = document.getElementById("taskInput");
+      const text = input.value.trim();
+      if (text === "") {
+        alert("Vui lòng nhập công việc.");
+        return;
+      }
+      tasks.push({ text, done: false });
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      input.value = "";
+      renderTasks();
+    }
+
+    function toggleDone(index) {
+      tasks[index].done = !tasks[index].done;
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function deleteTask(index) {
+      if (confirm("Xoá công việc này?")) {
+        tasks.splice(index, 1);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+      }
+    }
+    
+    // 📚 Lịch học
+    let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
+
+    function renderSchedule() {
+      const list = document.getElementById("scheduleList");
+      list.innerHTML = "";
+      schedules.forEach((item, index) => {
+        const li = document.createElement("li");
+        li.className = "bg-green-50 border-l-4 border-green-400 p-2 rounded flex justify-between items-center";
+        li.innerHTML = `
+          <span>${item}</span>
+          <button onclick="deleteSchedule(${index})" class="text-red-500 hover:underline">🗑️</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function addSchedule() {
+      const input = document.getElementById("scheduleInput");
+      const text = input.value.trim();
+      if (text === "") {
+        alert("Vui lòng nhập lịch học.");
+        return;
+      }
+      schedules.push(text);
+      localStorage.setItem("schedules", JSON.stringify(schedules));
+      input.value = "";
+      renderSchedule();
+    }
+
+    function deleteSchedule(index) {
+      if (confirm("Xoá lịch học này?")) {
+        schedules.splice(index, 1);
+        localStorage.setItem("schedules", JSON.stringify(schedules));
+        renderSchedule();
+      }
+    }
+
+    // Chạy các hàm render và khởi tạo khi DOM đã sẵn sàng
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTasks();    // Hiển thị to-do list
+      renderSchedule(); // Hiển thị lịch học
+      updateClock();    // Gọi updateClock lần đầu để hiển thị thời gian và ngày âm (ước tính)
+    });
+
+  </script>
+</body>
+</html>
