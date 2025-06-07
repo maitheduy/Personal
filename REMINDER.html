@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-do & Lịch học</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch input { 
+      opacity: 0; 
+      width: 0; 
+      height: 0; 
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      border-radius: 50%;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+    }
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+  <div class="max-w-3xl mx-auto">
+    <!-- Dòng hiển thị ngày âm lịch -->
+    <div id="dateDisplayBlock" class="bg-yellow-50 text-yellow-700 font-medium rounded-t-lg p-2 text-center">
+      <span id="lunarDate">Đang tải thông tin lịch...</span>
+    </div>
+    <div class="bg-white rounded-lg shadow-lg p-6 rounded-t-none">
+      <!-- Thời gian hiện tại -->
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-blue-600">🕒 <span id="clock">--:--</span> | 📅 <span id="date">--/--/----</span></h1>
+      </div>
+
+      <!-- Chuyển đổi lịch -->
+      <div class="text-center mb-6">
+        <label class="switch">
+          <input type="checkbox" id="switch"> <!-- Mặc định là không check, tức là ẩn -->
+          <span class="slider"></span>
+        </label>
+        <p id="switchLabel" class="text-xl text-blue-700 mt-3">Hiện thông tin lịch</p>
+      </div>
+
+      <!-- To-do list -->
+      <h2 class="text-xl font-semibold text-blue-700 mb-2">📋 Danh sách việc cần làm</h2>
+      <div class="flex mb-4 gap-2">
+        <input id="taskInput" type="text" placeholder="Nhập công việc..." class="flex-grow border p-2 rounded" />
+        <button onclick="addTask()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Thêm</button>
+      </div>
+      <ul id="taskList" class="space-y-3 mb-6"></ul>
+
+      <!-- Lịch học -->
+      <h2 class="text-xl font-semibold text-green-700 mb-2">📚 Lịch học / Thời gian biểu</h2>
+      <div class="flex mb-4 gap-2">
+        <input id="scheduleInput" type="text" placeholder="Nhập lịch học (VD: Thứ 2 - Toán 7h)" class="flex-grow border p-2 rounded" />
+        <button onclick="addSchedule()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Thêm</button>
+      </div>
+      <ul id="scheduleList" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Các mảng Can, Chi, và thông số tháng cho lịch âm Việt Nam
+    const CAN = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+    const CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+    const LUNAR_MONTH_DAYS = [0, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29]; //Tháng 0 không dùng
+
+    // Hàm tính lịch âm Việt Nam đơn giản
+    function getLunarDateVietnam(currentDate) {
+        const solarYear = currentDate.getFullYear();
+        const solarMonth = currentDate.getMonth() + 1;
+        const solarDay = currentDate.getDate();
+        
+        // Mốc Dương lịch: 01/01/2024 là ngày 20 tháng 11 năm Quý Mão (2023 Âm lịch)
+        const epochSolarDate = new Date(2024, 0, 1); // 01/01/2024 Dương lịch
+        const epochLunarDay = 20;
+        const epochLunarMonth = 11;
+        const epochLunarYear = 2023; // Quý Mão
+
+        const diffTime = currentDate.getTime() - epochSolarDate.getTime();
+        let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        let lunarDay = epochLunarDay + diffDays;
+        let lunarMonth = epochLunarMonth;
+        let lunarYear = epochLunarYear;
+
+        // Điều chỉnh ngày âm
+        // Logic này cần được cải thiện để chính xác hơn, đặc biệt là với năm nhuận
+        // Đây là một phép tính ước lượng đơn giản
+        while (true) {
+            let daysInMonth = LUNAR_MONTH_DAYS[lunarMonth] || 29; // Mặc định 29 ngày nếu tháng không có trong mảng (ví dụ tháng nhuận)
+            // Giả định đơn giản cho năm nhuận, thực tế phức tạp hơn nhiều
+            if (lunarYear % 4 === 0 && lunarMonth === 2) { // Ví dụ năm nhuận có tháng 2 nhuận (không chính xác)
+                // daysInMonth = 29; // Ví dụ
+            }
+
+            if (lunarDay > daysInMonth) {
+                lunarDay -= daysInMonth;
+                lunarMonth++;
+                if (lunarMonth > 12) {
+                    lunarMonth = 1;
+                    lunarYear++;
+                }
+            } else if (lunarDay <= 0) { // Xử lý trường hợp ngày âm < 0 (khi tính lùi)
+                lunarMonth--;
+                if (lunarMonth < 1) {
+                    lunarMonth = 12;
+                    lunarYear--;
+                }
+                daysInMonth = LUNAR_MONTH_DAYS[lunarMonth] || 29;
+                lunarDay += daysInMonth;
+
+            } else {
+                break;
+            }
+        }
+        
+        const canYear = CAN[(lunarYear - 4 + 60) % 10]; // +60 để đảm bảo số dương
+        const chiYear = CHI[(lunarYear - 4 + 60) % 12];
+
+        return `Ngày Âm Việt Nam: Ngày ${lunarDay} tháng ${lunarMonth} năm ${canYear} ${chiYear}`;
+    }
+
+    // Hàm tính lịch Tây Tạng (Dựng một phép tính đơn giản)
+    function getTibetanDate(currentDate) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        const day = currentDate.getDate();
+        const tibetanYear = year - 1959; // Losar (Năm mới Tây Tạng) thường rơi vào tháng 2 DL. Đây là một ước tính rất thô.
+                                        // Để chính xác hơn, cần một thư viện tính lịch Tây Tạng chuyên dụng.
+        return `Ngày Âm Tây Tạng: Ngày ${day} tháng ${month} năm ${tibetanYear} (ước tính)`;
+    }
+
+    // Hàm lấy ngày dương lịch Việt Nam (Không còn được sử dụng để hiển thị trong khối lịch, nhưng có thể dùng ở chỗ khác nếu cần)
+    function getSolarDateVietnam(currentDate) {
+        return `Ngày Dương (Việt Nam): ${currentDate.toLocaleDateString('vi-VN')}`;
+    }
+
+    // Hàm lấy ngày dương lịch Tây Tạng (Không còn được sử dụng để hiển thị trong khối lịch, nhưng có thể dùng ở chỗ khác nếu cần)
+    function getSolarDateTibet(currentDate) {
+        return `Ngày Dương (Tây Tạng): ${currentDate.toLocaleDateString('vi-VN')}`; // Hiển thị theo định dạng VN cho dễ đọc
+    }
+
+    // Hiển thị thời gian hiện tại và tính lịch
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('vi-VN');
+        const date = now.toLocaleDateString('vi-VN');
+        document.getElementById('clock').innerText = time;
+        document.getElementById('date').innerText = date; // Đây là ngày dương lịch chính của trang
+
+        try {
+            const lunarVietnamStr = getLunarDateVietnam(now);
+            const tibetanLunarStr = getTibetanDate(now);
+            // const solarVietnamStr = getSolarDateVietnam(now); // Đã bỏ
+            // const solarTibetStr = getSolarDateTibet(now); // Đã bỏ
+
+            document.getElementById('lunarDate').innerHTML = `
+                ${lunarVietnamStr} <br>
+                ${tibetanLunarStr}
+            `;
+        } catch (e) {
+            console.error("Lỗi khi ước tính lịch:", e);
+            document.getElementById('lunarDate').innerText = "Lỗi khi tải thông tin lịch.";
+        }
+    }
+    
+    const dateDisplayBlock = document.getElementById('dateDisplayBlock');
+    const switchInput = document.getElementById('switch');
+    const switchLabel = document.getElementById('switchLabel');
+
+    // Đổi trạng thái ẩn/hiện của khối lịch và cập nhật label
+    switchInput.addEventListener('change', (event) => {
+        if (event.target.checked) { // Nếu switch được check (bật) -> Hiện lịch
+            dateDisplayBlock.classList.remove('hidden');
+            switchLabel.innerText = 'Ẩn thông tin lịch';
+        } else { // Nếu switch không được check (tắt) -> Ẩn lịch
+            dateDisplayBlock.classList.add('hidden');
+            switchLabel.innerText = 'Hiện thông tin lịch';
+        }
+        // Không cần gọi updateClock() ở đây vì nó đã được gọi bởi setInterval
+    });
+
+    setInterval(updateClock, 1000); // Cập nhật mỗi giây
+
+    // To-do list
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    function renderTasks() {
+        const list = document.getElementById("taskList");
+        list.innerHTML = "";
+        tasks.forEach((task, index) => {
+            const li = document.createElement("li");
+            li.className = "flex justify-between items-center bg-gray-50 border-l-4 p-3 rounded " + (task.done ? "border-green-400" : "border-gray-300");
+            li.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" ${task.done ? "checked" : ""} onchange="toggleDone(${index})" />
+                    <span class="${task.done ? 'line-through text-gray-400' : ''}">${task.text}</span>
+                </div>
+                <button onclick="deleteTask(${index})" class="text-red-500 hover:underline">🗑️</button>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function addTask() {
+        const input = document.getElementById("taskInput");
+        const text = input.value.trim();
+        if (text === "") {
+            alert("Vui lòng nhập công việc.");
+            return;
+        }
+        tasks.push({ text, done: false });
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        input.value = "";
+        renderTasks();
+    }
+
+    function toggleDone(index) {
+        tasks[index].done = !tasks[index].done;
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+    }
+
+    function deleteTask(index) {
+        if (confirm("Xoá công việc này?")) {
+            tasks.splice(index, 1);
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+            renderTasks();
+        }
+    }
+
+    // Lịch học
+    let schedules = JSON.parse(localStorage.getItem("schedules")) || [];
+
+    function renderSchedule() {
+        const list = document.getElementById("scheduleList");
+        list.innerHTML = "";
+        schedules.forEach((item, index) => {
+            const li = document.createElement("li");
+            li.className = "bg-green-50 border-l-4 border-green-400 p-2 rounded flex justify-between items-center";
+            li.innerHTML = `
+                <span>${item}</span>
+                <button onclick="deleteSchedule(${index})" class="text-red-500 hover:underline">🗑️</button>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    function addSchedule() {
+        const input = document.getElementById("scheduleInput");
+        const text = input.value.trim();
+        if (text === "") {
+            alert("Vui lòng nhập lịch học.");
+            return;
+        }
+        schedules.push(text);
+        localStorage.setItem("schedules", JSON.stringify(schedules));
+        input.value = "";
+        renderSchedule();
+    }
+
+    function deleteSchedule(index) {
+        if (confirm("Xoá lịch học này?")) {
+            schedules.splice(index, 1);
+            localStorage.setItem("schedules", JSON.stringify(schedules));
+            renderSchedule();
+        }
+    }
+
+    // Chạy các hàm render và khởi tạo khi DOM đã sẵn sàng
+    document.addEventListener('DOMContentLoaded', () => {
+        // Thiết lập trạng thái ban đầu cho khối lịch dựa trên switch
+        if (switchInput.checked) {
+            dateDisplayBlock.classList.remove('hidden');
+            switchLabel.innerText = 'Ẩn thông tin lịch';
+        } else {
+            dateDisplayBlock.classList.add('hidden');
+            switchLabel.innerText = 'Hiện thông tin lịch';
+        }
+        
+        updateClock(); // Gọi lần đầu để hiển thị ngay
+        renderTasks();
+        renderSchedule();
+    });
+  </script>
+</body>
+</html>
