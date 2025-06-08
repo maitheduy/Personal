@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <<< THAY ĐỔI 1: TIÊU ĐỀ TAB TRÌNH DUYỆT >>> -->
+    <title>Duymt Speak</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 700px;
+        }
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 1.5rem;
+        }
+        .language-config {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 15px;
+        }
+        .language-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .language-box label {
+            font-weight: 500;
+            color: #555;
+        }
+        .language-box select {
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            min-width: 150px;
+        }
+        .swap-icon {
+            cursor: pointer;
+            font-size: 24px;
+            color: #1a73e8;
+            transition: transform 0.3s;
+            padding-top: 20px;
+        }
+        .swap-icon:hover {
+            transform: scale(1.2);
+        }
+        #toggleBtn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        #toggleBtn.recording {
+            background-color: #d93025;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(217, 48, 37, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 48, 37, 0); }
+        }
+        #status {
+            font-size: 1.1rem;
+            color: #666;
+            min-height: 25px;
+            margin-bottom: 2rem;
+        }
+        .result-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        .box {
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            flex: 1;
+            min-height: 100px;
+        }
+        .box h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .speaker-icon {
+            cursor: pointer;
+            font-size: 0.9em;
+            opacity: 0.7;
+            transition: opacity 0.2s, transform 0.2s;
+            visibility: hidden; 
+        }
+        .speaker-icon.visible {
+            visibility: visible;
+        }
+        .speaker-icon:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        @media (max-width: 600px) {
+            .language-config { flex-direction: column; }
+            .result-container { flex-direction: column; }
+            .container { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- <<< THAY ĐỔI 2: TIÊU ĐỀ CHÍNH TRÊN TRANG >>> -->
+        <h1>Duymt Speak</h1>
+        
+        <div class="language-config">
+            <div class="language-box">
+                <label for="source-lang">Ngôn ngữ nói</label>
+                <select id="source-lang"></select>
+            </div>
+            <div id="swap-btn" class="swap-icon" title="Đảo ngược ngôn ngữ">
+                ⇆
+            </div>
+            <div class="language-box">
+                <label for="target-lang">Ngôn ngữ dịch</label>
+                <select id="target-lang"></select>
+            </div>
+        </div>
+        
+        <button id="toggleBtn">Bắt đầu ghi âm</button>
+        <p id="status">Sẵn sàng</p>
+
+        <div class="result-container">
+            <div class="box" id="original-box">
+                <h2 id="original-title">
+                    <span>Văn bản gốc</span>
+                    <span class="speaker-icon" id="speak-original-btn" title="Nghe lại">🔊</span>
+                </h2>
+                <p id="original-text">...</p>
+            </div>
+            <div class="box" id="translated-box">
+                <h2 id="translated-title">
+                    <span>Bản dịch</span>
+                    <span class="speaker-icon" id="speak-translated-btn" title="Nghe lại">🔊</span>
+                </h2>
+                <p id="translated-text">...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GEMINI_API_KEY = 'AIzaSyAagwNYrGBzUo42P5pyJ_dNYV_xxRofV2I';
+
+        const sourceLangSelect = document.getElementById('source-lang');
+        const targetLangSelect = document.getElementById('target-lang');
+        const swapBtn = document.getElementById('swap-btn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const statusEl = document.getElementById('status');
+        const originalTitle = document.getElementById('original-title').querySelector('span');
+        const originalTextEl = document.getElementById('original-text');
+        const translatedTitle = document.getElementById('translated-title').querySelector('span');
+        const translatedTextEl = document.getElementById('translated-text');
+        const speakOriginalBtn = document.getElementById('speak-original-btn');
+        const speakTranslatedBtn = document.getElementById('speak-translated-btn');
+
+        const languageMap = new Map([
+            ['vi', { fullName: 'Vietnamese', displayName: 'Tiếng Việt' }],
+            ['en', { fullName: 'English', displayName: 'Tiếng Anh' }],
+            ['ja', { fullName: 'Japanese', displayName: 'Tiếng Nhật' }],
+            ['ko', { fullName: 'Korean', displayName: 'Tiếng Hàn' }],
+            ['zh-CN', { fullName: 'Chinese (Simplified)', displayName: 'Tiếng Trung' }],
+            ['fr', { fullName: 'French', displayName: 'Tiếng Pháp' }],
+            ['de', { fullName: 'German', displayName: 'Tiếng Đức' }],
+            ['es', { fullName: 'Spanish', displayName: 'Tiếng Tây Ban Nha' }]
+        ]);
+        
+        let recognition;
+        let isRecording = false;
+
+        function init() {
+            populateLanguageSelectors();
+            setupEventListeners();
+            setupSpeechRecognition();
+        }
+
+        function populateLanguageSelectors() {
+            languageMap.forEach((lang, code) => {
+                sourceLangSelect.add(new Option(lang.displayName, code));
+                targetLangSelect.add(new Option(lang.displayName, code));
+            });
+            sourceLangSelect.value = 'vi';
+            targetLangSelect.value = 'en';
+        }
+
+        function setupEventListeners() {
+            swapBtn.addEventListener('click', handleSwapLanguages);
+            sourceLangSelect.addEventListener('change', updateRecognitionLanguage);
+            toggleBtn.addEventListener('click', handleToggleRecording);
+            speakOriginalBtn.addEventListener('click', handleSpeakOriginal);
+            speakTranslatedBtn.addEventListener('click', handleSpeakTranslated);
+        }
+
+        function setupSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition && 'speechSynthesis' in window) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onstart = handleRecognitionStart;
+                recognition.onend = handleRecognitionEnd;
+                recognition.onerror = handleRecognitionError;
+                recognition.onresult = handleRecognitionResult;
+                updateRecognitionLanguage();
+            } else {
+                statusEl.textContent = "Trình duyệt không hỗ trợ các API cần thiết. Vui lòng dùng Chrome.";
+                [toggleBtn, sourceLangSelect, targetLangSelect, swapBtn].forEach(el => el.disabled = true);
+            }
+        }
+
+        function handleToggleRecording() {
+            if (!recognition) return;
+            isRecording ? recognition.stop() : recognition.start();
+        }
+
+        function handleSwapLanguages() {
+            const sourceVal = sourceLangSelect.value;
+            sourceLangSelect.value = targetLangSelect.value;
+            targetLangSelect.value = sourceVal;
+            updateRecognitionLanguage();
+        }
+
+        function handleSpeakOriginal() {
+            const text = originalTextEl.textContent;
+            if (text && text !== '...') {
+                speakText(text, sourceLangSelect.value);
+            }
+        }
+
+        function handleSpeakTranslated() {
+            const text = translatedTextEl.textContent;
+            if (text && text !== '...') {
+                speakText(text, targetLangSelect.value);
+            }
+        }
+
+        function handleRecognitionStart() {
+            isRecording = true;
+            window.speechSynthesis.cancel();
+            statusEl.textContent = "Đang nghe...";
+            toggleBtn.textContent = "Dừng ghi âm";
+            toggleBtn.classList.add('recording');
+            originalTextEl.textContent = '...';
+            translatedTextEl.textContent = '...';
+            speakOriginalBtn.classList.remove('visible');
+            speakTranslatedBtn.classList.remove('visible');
+            const sourceLangName = languageMap.get(sourceLangSelect.value).displayName;
+            const targetLangName = languageMap.get(targetLangSelect.value).displayName;
+            originalTitle.textContent = `Văn bản gốc (${sourceLangName})`;
+            translatedTitle.textContent = `Bản dịch (${targetLangName})`;
+        }
+
+        function handleRecognitionEnd() {
+            isRecording = false;
+            if (statusEl.textContent.indexOf('Lỗi') === -1) {
+                statusEl.textContent = "Sẵn sàng";
+            }
+            toggleBtn.textContent = "Bắt đầu ghi âm";
+            toggleBtn.classList.remove('recording');
+        }
+
+        function handleRecognitionError(event) {
+            let errorMessage = "Đã xảy ra lỗi: " + event.error;
+            if (event.error === 'no-speech') errorMessage = "Không nhận thấy giọng nói. Vui lòng thử lại.";
+            else if (event.error === 'not-allowed') errorMessage = "Bạn chưa cấp quyền sử dụng micro.";
+            else if (event.error === 'language-not-supported') errorMessage = `Ngôn ngữ '${languageMap.get(sourceLangSelect.value).displayName}' không được hỗ trợ nhận dạng.`;
+            statusEl.textContent = errorMessage;
+        }
+
+        function handleRecognitionResult(event) {
+            const transcript = event.results[0][0].transcript;
+            originalTextEl.textContent = transcript;
+            statusEl.textContent = "Đã nhận diện xong. Đang dịch...";
+            translate(transcript);
+        }
+
+        function updateRecognitionLanguage() {
+            if (recognition) {
+                recognition.lang = sourceLangSelect.value;
+            }
+        }
+
+        function speakText(text, langCode) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode;
+            utterance.onerror = (e) => {
+                console.error('Lỗi SpeechSynthesis:', e.error);
+                statusEl.textContent = `Lỗi phát âm: Không tìm thấy giọng nói cho ngôn ngữ đã chọn.`;
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function translate(text) {
+            const sourceLangCode = sourceLangSelect.value;
+            const targetLangCode = targetLangSelect.value;
+            if (sourceLangCode === targetLangCode) {
+                translatedTextEl.textContent = text;
+                statusEl.textContent = "Ngôn ngữ gốc và đích giống nhau.";
+                speakText(text, targetLangCode);
+                speakOriginalBtn.classList.add('visible');
+                speakTranslatedBtn.classList.add('visible');
+                return;
+            }
+            await translateWithGeminiAPI(text, sourceLangCode, targetLangCode);
+        }
+
+        async function translateWithGeminiAPI(text, sourceLangCode, targetLangCode) {
+            const MODEL_NAME = "gemini-1.5-flash-latest"; 
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+            const sourceLanguageName = languageMap.get(sourceLangCode).fullName;
+            const targetLanguageName = languageMap.get(targetLangCode).fullName;
+            const prompt = `Translate the following ${sourceLanguageName} text to ${targetLanguageName}. Provide only the translation, without any additional explanations or text.\n${sourceLanguageName} text: "${text}"\n${targetLanguageName} translation:`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.candidates && data.candidates[0].content.parts.length > 0) {
+                    const translatedText = data.candidates[0].content.parts[0].text.trim();
+                    translatedTextEl.textContent = translatedText;
+                    statusEl.textContent = "Dịch thành công! Đang phát âm...";
+                    speakText(translatedText, targetLangCode);
+                    speakOriginalBtn.classList.add('visible');
+                    speakTranslatedBtn.classList.add('visible');
+                } else {
+                     const finishReason = data.candidates?.[0]?.finishReason;
+                    if (finishReason === 'SAFETY') throw new Error("Kết quả bị chặn vì lý do an toàn.");
+                    else throw new Error("Không nhận được kết quả hợp lệ từ Gemini API.");
+                }
+
+            } catch (error) {
+                console.error(`Lỗi dịch với Gemini API:`, error);
+                translatedTextEl.textContent = "Không thể dịch được văn bản.";
+                statusEl.textContent = `Lỗi Gemini API: ${error.message}`;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
