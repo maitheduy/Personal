@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duymt Speak - Công cụ dịch giọng nói</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --danger-color: #f72585;
+            --success-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --text-color: #2b2d42;
+            --border-radius: 12px;
+            --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #4361ee, #3f37c9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #6c757d;
+            font-weight: 400;
+        }
+
+        .language-config {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            background-color: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+
+        .language-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .language-box label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            color: var(--text-color);
+            background-color: white;
+            appearance: none;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 0.5rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .voice-select {
+            font-size: 0.9rem;
+            padding: 0.6rem 0.8rem;
+        }
+
+        #swap-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        #swap-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        #toggleBtn {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        #toggleBtn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        #toggleBtn.recording {
+            background-color: var(--danger-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(247, 37, 133, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(247, 37, 133, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(247, 37, 133, 0); }
+        }
+
+        #status {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #6c757d;
+            min-height: 1.5rem;
+        }
+
+        .result-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .box {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e9ecef;
+            transition: var(--transition);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .box h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f8f9fa;
+            padding-bottom: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .speaker-icon, .copy-icon, .edit-icon, .refresh-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .speaker-icon:hover, .copy-icon:hover, .edit-icon:hover, .refresh-icon:hover {
+            background-color: #f8f9fa;
+            color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        .box p {
+            flex-grow: 1;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #495057;
+            overflow-y: auto;
+            max-height: 200px;
+            padding: 0.5rem 0;
+        }
+
+        .box textarea {
+            flex-grow: 1;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #495057;
+            border: 1px solid #e9ecef;
+            border-radius: var(--border-radius);
+            padding: 0.5rem;
+            resize: none;
+            max-height: 200px;
+            width: 100%;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .box textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #adb5bd;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6c757d;
+        }
+
+        .mic-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: relative;
+        }
+
+        .mic-icon::before {
+            content: "🎤";
+            position: absolute;
+            animation: bounce 0.8s infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-5px); }
+        }
+
+        [title] {
+            position: relative;
+        }
+
+        [title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--dark-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            z-index: 10;
+            margin-bottom: 0.5rem;
+        }
+
+        optgroup {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        option {
+            padding: 0.5rem;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(67, 97, 238, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .copied-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .copied-message.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .language-config {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            #swap-btn {
+                position: relative;
+                left: auto;
+                transform: none;
+                margin: 1rem 0;
+            }
+
+            .result-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Duymt Speak</h1>
+            <p class="subtitle">Công cụ dịch giọng nói và nhập văn bản đa ngôn ngữ</p>
+        </header>
+
+        <div class="language-config">
+            <div class="language-box">
+                <label for="source-lang">Ngôn ngữ nói</label>
+                <select id="source-lang"></select>
+                <select id="source-voice" class="voice-select"></select>
+            </div>
+            <div id="swap-btn" class="swap-icon" title="Đảo ngược ngôn ngữ">⇆</div>
+            <div class="language-box">
+                <label for="target-lang">Ngôn ngữ dịch</label>
+                <select id="target-lang"></select>
+                <select id="target-voice" class="voice-select"></select>
+            </div>
+        </div>
+
+        <button id="toggleBtn">
+            <span class="mic-icon"></span>
+            <span>Bắt đầu ghi âm</span>
+        </button>
+        
+        <p id="status">Sẵn sàng</p>
+
+        <div class="result-container">
+            <div class="box" id="original-box">
+                <h2 id="original-title">
+                    <span>Văn bản gốc</span>
+                    <div class="action-buttons">
+                        <span class="speaker-icon" id="speak-original-btn" title="Nghe lại">🔊</span>
+                        <span class="copy-icon" id="copy-original-btn" title="Sao chép">⎘</span>
+                        <span class="refresh-icon" id="refresh-original-btn" title="Làm mới dịch">↻</span>
+                    </div>
+                </h2>
+                <textarea id="original-text" placeholder="Nhập hoặc nói văn bản..."></textarea>
+            </div>
+            <div class="box" id="translated-box">
+                <h2 id="translated-title">
+                    <span>Bản dịch</span>
+                    <div class="action-buttons">
+                        <span class="speaker-icon" id="speak-translated-btn" title="Nghe lại">🔊</span>
+                        <span class="copy-icon" id="copy-translated-btn" title="Sao chép">⎘</span>
+                        <span class="edit-icon" id="edit-translated-btn" title="Chỉnh sửa">✎</span>
+                        <span class="refresh-icon" id="refresh-translated-btn" title="Làm mới dịch">↻</span>
+                    </div>
+                </h2>
+                <p id="translated-text">...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="copied-message" id="copiedMessage">Đã sao chép!</div>
+
+    <script>
+        // --- API KEYS ---
+        const GEMINI_API_KEY = 'AIzaSyAagwNYrGBzUo42P5pyJ_dNYV_xxRofV2I'; 
+        const GOOGLE_CLOUD_API_KEY = 'AIzaSyCatykPNrVo-8maKX_-NNvHREWcVTjClOI'; // Used for both TTS and STT
+
+        // --- DOM ELEMENTS ---
+        const sourceLangSelect = document.getElementById('source-lang');
+        const targetLangSelect = document.getElementById('target-lang');
+        const sourceVoiceSelect = document.getElementById('source-voice');
+        const targetVoiceSelect = document.getElementById('target-voice');
+        const swapBtn = document.getElementById('swap-btn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const statusEl = document.getElementById('status');
+        const originalTitle = document.getElementById('original-title').querySelector('span');
+        const originalTextEl = document.getElementById('original-text');
+        const translatedTitle = document.getElementById('translated-title').querySelector('span');
+        const translatedTextEl = document.getElementById('translated-text');
+        const speakOriginalBtn = document.getElementById('speak-original-btn');
+        const speakTranslatedBtn = document.getElementById('speak-translated-btn');
+        const copyOriginalBtn = document.getElementById('copy-original-btn');
+        const copyTranslatedBtn = document.getElementById('copy-translated-btn');
+        const editTranslatedBtn = document.getElementById('edit-translated-btn');
+        const refreshOriginalBtn = document.getElementById('refresh-original-btn');
+        const refreshTranslatedBtn = document.getElementById('refresh-translated-btn');
+        const copiedMessage = document.getElementById('copiedMessage');
+
+        // --- APP STATE & CONFIG ---
+        const languageMap = new Map([
+            ['vi', { fullName: 'Vietnamese', displayName: 'Tiếng Việt', ttsCode: 'vi-VN', sttCode: 'vi-VN' }],
+            ['en', { fullName: 'English', displayName: 'Tiếng Anh', ttsCode: 'en-US', sttCode: 'en-US' }],
+            ['ja', { fullName: 'Japanese', displayName: 'Tiếng Nhật', ttsCode: 'ja-JP', sttCode: 'ja-JP' }],
+            ['ko', { fullName: 'Korean', displayName: 'Tiếng Hàn', ttsCode: 'ko-KR', sttCode: 'ko-KR' }],
+            ['zh-CN', { fullName: 'Chinese (Simplified)', displayName: 'Tiếng Trung', ttsCode: 'cmn-CN', sttCode: 'cmn-Hans-CN' }], // Note STT code for Mandarin
+            ['fr', { fullName: 'French', displayName: 'Tiếng Pháp', ttsCode: 'fr-FR', sttCode: 'fr-FR' }],
+            ['de', { fullName: 'German', displayName: 'Tiếng Đức', ttsCode: 'de-DE', sttCode: 'de-DE' }],
+            ['es', { fullName: 'Spanish', displayName: 'Tiếng Tây Ban Nha', ttsCode: 'es-ES', sttCode: 'es-ES' }]
+        ]);
+        
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let voices = []; // For browser's SpeechSynthesis (fallback TTS)
+        let voicesReady = false; // For browser's SpeechSynthesis
+        let isEditingTranslated = false;
+        let typingTimeout;
+        let currentAudio = null; // To control currently playing TTS audio
+
+        // --- INITIALIZATION ---
+        function init() {
+            if (!GOOGLE_CLOUD_API_KEY || !GOOGLE_CLOUD_API_KEY.startsWith('AIza')) {
+                statusEl.textContent = "Lỗi: API Key của Google Cloud chưa được cấu hình đúng!";
+                toggleBtn.disabled = true;
+                return;
+            }
+            populateLanguageSelectors();
+            setupEventListeners();
+            loadBrowserVoices(); 
+        }
+
+        function populateLanguageSelectors() {
+            languageMap.forEach((lang, code) => {
+                sourceLangSelect.add(new Option(lang.displayName, code));
+                targetLangSelect.add(new Option(lang.displayName, code));
+            });
+            sourceLangSelect.value = 'vi';
+            targetLangSelect.value = 'en';
+            populateBrowserVoiceSelect('vi', sourceVoiceSelect);
+            populateBrowserVoiceSelect('en', targetVoiceSelect);
+        }
+
+        function setupEventListeners() {
+            swapBtn.addEventListener('click', handleSwapLanguages);
+            sourceLangSelect.addEventListener('change', () => {
+                populateBrowserVoiceSelect(sourceLangSelect.value, sourceVoiceSelect);
+                handleTextChange(); // If text exists, re-translate for new source/target
+            });
+            targetLangSelect.addEventListener('change', () => {
+                populateBrowserVoiceSelect(targetLangSelect.value, targetVoiceSelect);
+                handleTextChange(); // If text exists, re-translate
+            });
+            toggleBtn.addEventListener('click', handleToggleRecording);
+            speakOriginalBtn.addEventListener('click', handleSpeakOriginal);
+            speakTranslatedBtn.addEventListener('click', handleSpeakTranslated);
+            copyOriginalBtn.addEventListener('click', () => copyToClipboard(originalTextEl));
+            copyTranslatedBtn.addEventListener('click', () => copyToClipboard(translatedTextEl));
+            editTranslatedBtn.addEventListener('click', () => toggleEditMode('translated'));
+            refreshOriginalBtn.addEventListener('click', () => handleRefresh('original'));
+            refreshTranslatedBtn.addEventListener('click', () => handleRefresh('translated'));
+            originalTextEl.addEventListener('input', handleTextChange);
+        }
+
+        // --- SPEECH-TO-TEXT (GOOGLE CLOUD STT API) ---
+        async function handleToggleRecording() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                statusEl.textContent = "Trình duyệt không hỗ trợ API ghi âm.";
+                return;
+            }
+            if (isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stopCurrentAudio(); // Stop any TTS playback
+                
+                // Try to record in WEBM OPUS, which is good for STT API
+                const options = { mimeType: 'audio/webm;codecs=opus' };
+                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                    console.warn(`${options.mimeType} không được hỗ trợ. Thử audio/ogg...`);
+                    options.mimeType = 'audio/ogg;codecs=opus';
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        console.warn(`${options.mimeType} không được hỗ trợ. Thử mặc định...`);
+                        delete options.mimeType; // Let browser pick
+                    }
+                }
+                
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop()); // Stop microphone access
+                    if (audioChunks.length === 0) {
+                        statusEl.textContent = "Không có dữ liệu âm thanh được ghi lại.";
+                        return;
+                    }
+                    statusEl.innerHTML = '<span class="loading"></span> Đang xử lý âm thanh...';
+                    
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    audioChunks = []; // Clear for next recording
+                    
+                    try {
+                        const base64Audio = await blobToBase64(audioBlob);
+                        await sendAudioToGoogleSTT(base64Audio);
+                    } catch (error) {
+                        console.error("Lỗi xử lý audio hoặc gửi đến STT:", error);
+                        statusEl.textContent = "Lỗi xử lý âm thanh: " + error.message;
+                    }
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                statusEl.textContent = "Đang nghe... Nhấn nút lần nữa để dừng.";
+                toggleBtn.innerHTML = '<span class="loading"></span><span> Dừng ghi âm</span>';
+                toggleBtn.classList.add('recording');
+                originalTextEl.value = '';
+                translatedTextEl.textContent = '...';
+                
+            } catch (err) {
+                console.error("Lỗi khi bắt đầu ghi âm:", err);
+                statusEl.textContent = "Lỗi micro: " + err.message;
+                isRecording = false; // Reset state
+                toggleBtn.innerHTML = '<span class="mic-icon"></span><span> Bắt đầu ghi âm</span>';
+                toggleBtn.classList.remove('recording');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                isRecording = false;
+                statusEl.textContent = "Đang dừng ghi âm...";
+                toggleBtn.innerHTML = '<span class="mic-icon"></span><span> Bắt đầu ghi âm</span>';
+                toggleBtn.classList.remove('recording');
+            }
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result.split(',')[1]; // Remove "data:mime/type;base64," prefix
+                    resolve(base64String);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+        
+        async function sendAudioToGoogleSTT(base64Audio) {
+            statusEl.innerHTML = '<span class="loading"></span> Đang gửi đến Google để nhận dạng...';
+            const langDetails = languageMap.get(sourceLangSelect.value);
+            const sttLangCode = langDetails ? langDetails.sttCode : sourceLangSelect.value;
+
+            const requestBody = {
+                config: {
+                    // encoding: "WEBM_OPUS", // API should infer from headers for WEBM/OGG if not LINEAR16/FLAC
+                    // sampleRateHertz: 48000, // Let API infer for WEBM/OGG
+                    languageCode: sttLangCode,
+                    enableAutomaticPunctuation: true,
+                    model: 'default', // or use "latest_long" for longer audio, "medical_dictation" etc.
+                                    // some models are "command_and_search"
+                },
+                audio: {
+                    content: base64Audio
+                }
+            };
+            // For WEBM_OPUS, it's better not to specify encoding and sampleRateHertz
+            // if the API can infer it from the file header.
+            // However, if MediaRecorder gives a specific mimeType like 'audio/webm;codecs=opus',
+            // we might map that to an encoding enum.
+            // Google STT Encodings: https://cloud.google.com/speech-to-text/docs/encoding
+            // For now, let's assume API infers it correctly from base64 of a common webm/ogg opus.
+            // If it fails, we might need to be more specific.
+
+            try {
+                const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${GOOGLE_CLOUD_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    let errorMessage = `Lỗi Google STT: ${errorData.error.message || `HTTP ${response.status}`}`;
+                     if (errorData.error.details && errorData.error.details.length > 0) {
+                        errorMessage += ` (${errorData.error.details[0].message || JSON.stringify(errorData.error.details[0])})`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                if (data.results && data.results.length > 0 && data.results[0].alternatives && data.results[0].alternatives.length > 0) {
+                    const transcript = data.results[0].alternatives[0].transcript;
+                    originalTextEl.value = transcript;
+                    statusEl.innerHTML = '<span class="loading"></span> Đã nhận diện. Đang dịch...';
+                    await translate(transcript);
+                } else {
+                    originalTextEl.value = "";
+                    statusEl.textContent = "Không nhận dạng được giọng nói. Thử lại?";
+                    console.warn("Google STT không trả về kết quả:", data);
+                }
+            } catch (error) {
+                console.error('Lỗi Google Cloud STT API:', error);
+                statusEl.textContent = "Lỗi nhận dạng: " + error.message;
+                 originalTextEl.value = ""; // Clear text on error
+            }
+        }
+
+
+        // --- TEXT-TO-SPEECH (GOOGLE CLOUD TTS API / BROWSER FALLBACK) ---
+        function stopCurrentAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                currentAudio = null;
+            }
+            window.speechSynthesis.cancel(); 
+        }
+        
+        async function speakText(text, langKey, voiceNameHint) {
+            stopCurrentAudio(); 
+
+            if (GOOGLE_CLOUD_API_KEY && GOOGLE_CLOUD_API_KEY.startsWith('AIza')) {
+                await speakWithGoogleCloudTTS(text, langKey, voiceNameHint);
+            } else {
+                console.warn("Google Cloud API Key chưa được cấu hình. Sử dụng Browser TTS.");
+                speakTextUsingBrowser(text, langKey, voiceNameHint);
+            }
+        }
+
+        function getGcpVoiceParams(langKey, voiceNameHint) {
+            const langDetails = languageMap.get(langKey);
+            if (!langDetails || !langDetails.ttsCode) {
+                console.error("Không tìm thấy mã ngôn ngữ TTS cho:", langKey);
+                return { languageCode: langKey }; 
+            }
+            const ttsLangCode = langDetails.ttsCode;
+            let gcpVoiceName;
+
+            const isHintFemale = voiceNameHint && (voiceNameHint.toLowerCase().includes('female') || voiceNameHint.toLowerCase().includes('nữ') || voiceNameHint.toLowerCase().includes('zira') || voiceNameHint.toLowerCase().includes('susan'));
+            const isHintMale = voiceNameHint && (voiceNameHint.toLowerCase().includes('male') || voiceNameHint.toLowerCase().includes('nam') || voiceNameHint.toLowerCase().includes('david') || voiceNameHint.toLowerCase().includes('mark'));
+
+            // Example voice selections, refer to Google Cloud TTS documentation for full list and features
+            // https://cloud.google.com/text-to-speech/docs/voices
+            switch (ttsLangCode) {
+                case 'vi-VN':
+                    gcpVoiceName = isHintMale ? 'vi-VN-Wavenet-D' : 'vi-VN-Wavenet-C'; // More distinct Wavenet voices
+                    if (voiceNameHint && voiceNameHint.toLowerCase().includes('neural2')) gcpVoiceName = isHintMale ? 'vi-VN-Neural2-D' : 'vi-VN-Neural2-C'; // If Neural2 exists
+                    else if (voiceNameHint && voiceNameHint.toLowerCase().includes('studio')) gcpVoiceName = isHintMale ? 'vi-VN-Studio-D' : 'vi-VN-Studio-C'; // If Studio exists
+                    break;
+                case 'en-US':
+                    gcpVoiceName = isHintFemale ? 'en-US-Neural2-H' : 'en-US-Neural2-D'; // Prefer Neural2
+                    if (voiceNameHint && voiceNameHint.toLowerCase().includes('studio')) gcpVoiceName = isHintFemale ? 'en-US-Studio-O' : 'en-US-Studio-M';
+                    else if (voiceNameHint && voiceNameHint.toLowerCase().includes('wavenet')) gcpVoiceName = isHintFemale ? 'en-US-Wavenet-F' : 'en-US-Wavenet-D';
+                    break;
+                 case 'ja-JP':
+                    gcpVoiceName = isHintFemale ? 'ja-JP-Neural2-B' : 'ja-JP-Neural2-C';
+                    if (voiceNameHint && voiceNameHint.toLowerCase().includes('wavenet')) gcpVoiceName = isHintFemale ? 'ja-JP-Wavenet-B' : 'ja-JP-Wavenet-C';
+                    break;
+                case 'ko-KR':
+                    gcpVoiceName = isHintFemale ? 'ko-KR-Neural2-A' : 'ko-KR-Neural2-B';
+                     if (voiceNameHint && voiceNameHint.toLowerCase().includes('wavenet')) gcpVoiceName = isHintFemale ? 'ko-KR-Wavenet-A' : 'ko-KR-Wavenet-B';
+                    break;
+                case 'cmn-CN':
+                    gcpVoiceName = isHintFemale ? 'cmn-CN-Wavenet-A' : 'cmn-CN-Wavenet-D'; // A, F, G, H (Female), B, C, D, E, I, J (Male) for Wavenet
+                    break;
+                case 'fr-FR':
+                    gcpVoiceName = isHintFemale ? 'fr-FR-Neural2-A' : 'fr-FR-Neural2-B';
+                    break;
+                case 'de-DE':
+                    gcpVoiceName = isHintFemale ? 'de-DE-Neural2-F' : 'de-DE-Neural2-B';
+                    break;
+                case 'es-ES':
+                    gcpVoiceName = isHintFemale ? 'es-ES-Neural2-A' : 'es-ES-Neural2-B';
+                    break;
+                default:
+                    console.warn(`Không có cấu hình giọng nói GCP cụ thể cho ${ttsLangCode}. API sẽ chọn mặc định.`);
+            }
+            return { languageCode: ttsLangCode, name: gcpVoiceName };
+        }
+
+        async function speakWithGoogleCloudTTS(text, langKey, voiceNameHint) {
+            statusEl.innerHTML = '<span class="loading"></span> Đang tạo giọng nói (Google Cloud)...';
+            
+            const voiceParams = getGcpVoiceParams(langKey, voiceNameHint);
+            const requestBody = {
+                input: { text: text },
+                voice: voiceParams,
+                audioConfig: { audioEncoding: 'MP3' } 
+            };
+
+            try {
+                const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_CLOUD_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    let errorMessage = `Lỗi Google TTS: ${errorData.error.message || `HTTP ${response.status}`}`;
+                    if(errorData.error.details && errorData.error.details.length > 0 ) {
+                        let detailMsg = errorData.error.details[0].message || JSON.stringify(errorData.error.details[0]);
+                         if(errorData.error.details[0]['@type'] === 'type.googleapis.com/google.rpc.ErrorInfo') {
+                             detailMsg = `(Domain: ${errorData.error.details[0].domain}, Reason: ${errorData.error.details[0].reason})`;
+                         }
+                        errorMessage += ` ${detailMsg}`;
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+                if (data.audioContent) {
+                    const audioSrc = `data:audio/mp3;base64,${data.audioContent}`;
+                    currentAudio = new Audio(audioSrc);
+                    currentAudio.play();
+                    statusEl.textContent = "Đang phát (Google Cloud)...";
+                    currentAudio.onended = () => { statusEl.textContent = "Sẵn sàng"; currentAudio = null; };
+                    currentAudio.onerror = (e) => {
+                        console.error("Lỗi phát audio Google Cloud:", e, currentAudio.error);
+                        statusEl.textContent = "Lỗi phát âm thanh Google Cloud.";
+                        currentAudio = null;
+                        speakTextUsingBrowser(text, langKey, voiceNameHint);
+                    };
+                } else {
+                    throw new Error("Không nhận được nội dung audio từ Google Cloud.");
+                }
+            } catch (error) {
+                console.error('Lỗi Google Cloud TTS:', error);
+                statusEl.textContent = error.message.length > 150 ? error.message.substring(0, 147) + "..." : error.message;
+                speakTextUsingBrowser(text, langKey, voiceNameHint);
+            }
+        }
+
+        function speakTextUsingBrowser(text, langKey, voiceName) {
+            if (!voicesReady || !window.speechSynthesis) {
+                statusEl.textContent = "Hệ thống phát âm (trình duyệt) chưa sẵn sàng.";
+                return;
+            }
+            statusEl.textContent = "Đang phát (trình duyệt)...";
+            window.speechSynthesis.cancel(); 
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            const langDetails = languageMap.get(langKey);
+            utterance.lang = langDetails ? langDetails.ttsCode : langKey; 
+
+            let selectedVoice = voices.find(v => v.name === voiceName && v.lang.startsWith(utterance.lang.substring(0,2)));
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.lang.startsWith(utterance.lang.substring(0,2))) || voices[0];
+            }
+            
+            if (selectedVoice) utterance.voice = selectedVoice;
+            else statusEl.textContent = `Không tìm thấy giọng nói trình duyệt cho ${langDetails ? langDetails.displayName : langKey}.`;
+
+            utterance.onerror = (e) => {
+                console.error('Lỗi SpeechSynthesis (trình duyệt):', e);
+                statusEl.textContent = `Lỗi phát âm (trình duyệt): ${e.error || 'Không thể phát âm.'}`;
+            };
+            utterance.onend = () => { statusEl.textContent = "Sẵn sàng"; };
+            try { window.speechSynthesis.speak(utterance); } 
+            catch (error) {
+                console.error('Lỗi khi phát âm (trình duyệt):', error);
+                statusEl.textContent = "Lỗi phát âm (trình duyệt).";
+            }
+        }
+
+        // --- TRANSLATION (GEMINI API) ---
+        async function translate(text) {
+            if (!text || text.trim() === '') {
+                 translatedTextEl.textContent = '...';
+                 if (!isRecording && mediaRecorder?.state !== "recording") { // Only update status if not actively recording/processing STT
+                    statusEl.textContent = "Sẵn sàng";
+                 }
+                 return;
+            }
+            const sourceLangCode = sourceLangSelect.value;
+            const targetLangCode = targetLangSelect.value;
+            if (sourceLangCode === targetLangCode) {
+                translatedTextEl.textContent = text;
+                statusEl.textContent = "Ngôn ngữ gốc và đích giống nhau.";
+                speakText(text, targetLangCode, targetVoiceSelect.value);
+                return;
+            }
+            statusEl.innerHTML = '<span class="loading"></span> Đang dịch...';
+            await translateWithGeminiAPI(text, sourceLangCode, targetLangCode);
+        }
+
+        async function translateBack(text) {
+             if (!text || text.trim() === '' || text === '...') {
+                 originalTextEl.value = '';
+                 statusEl.textContent = "Sẵn sàng";
+                 return;
+            }
+            const sourceLangCode = targetLangSelect.value; // Target becomes source for back-translation
+            const targetLangCode = sourceLangSelect.value; // Original source becomes target
+            if (sourceLangCode === targetLangCode) {
+                originalTextEl.value = text;
+                statusEl.textContent = "Ngôn ngữ gốc và đích giống nhau (dịch ngược).";
+                speakText(text, sourceLangSelect.value, sourceVoiceSelect.value);
+                return;
+            }
+            statusEl.innerHTML = '<span class="loading"></span> Đang dịch ngược...';
+            await translateWithGeminiAPI(text, sourceLangCode, targetLangCode, true);
+        }
+
+        async function translateWithGeminiAPI(text, sourceLangCode, targetLangCode, isBackTranslation = false) {
+            const MODEL_NAME = "gemini-1.5-flash-latest"; 
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+            const sourceLanguageName = languageMap.get(sourceLangCode)?.fullName || sourceLangCode;
+            const targetLanguageName = languageMap.get(targetLangCode)?.fullName || targetLangCode;
+            const prompt = `Translate the following ${sourceLanguageName} text to ${targetLanguageName}. Provide only the translation, without any additional explanations or text.\n${sourceLanguageName} text: "${text}"\n${targetLanguageName} translation:`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { temperature: 0, maxOutputTokens: 2048 }
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error.message || `HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                if (data?.candidates?.[0]?.content?.parts?.length) {
+                    const translatedText = data.candidates[0].content.parts[0].text.trim();
+                    if (isBackTranslation) {
+                        originalTextEl.value = translatedText;
+                        statusEl.textContent = "Dịch ngược thành công!";
+                        speakText(translatedText, sourceLangSelect.value, sourceVoiceSelect.value); 
+                    } else {
+                        translatedTextEl.textContent = translatedText;
+                        statusEl.textContent = "Dịch thành công!";
+                        speakText(translatedText, targetLangSelect.value, targetVoiceSelect.value);
+                    }
+                } else {
+                    const finishReason = data.candidates?.[0]?.finishReason;
+                    let errorMsg = "Không nhận được kết quả hợp lệ từ API Gemini.";
+                    if (finishReason === 'SAFETY') errorMsg = "Kết quả bị chặn bởi lý do an toàn.";
+                    else if (finishReason === 'MAX_TOKENS') errorMsg = "Kết quả dịch quá dài.";
+                    throw new Error(errorMsg);
+                }
+            } catch (error) {
+                console.error(`Lỗi dịch với Gemini API:`, error);
+                if (isBackTranslation) originalTextEl.value = "Lỗi dịch ngược.";
+                else translatedTextEl.textContent = "Lỗi dịch.";
+                statusEl.textContent = `Lỗi dịch: ${error.message}`;
+            }
+        }
+        
+        // --- UI & UTILITIES ---
+        function handleTextChange() { // Called on originalTextEl input or lang change
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                const text = originalTextEl.value.trim();
+                translate(text); // translate will handle empty text
+            }, 700); // Increased delay slightly
+        }
+
+        function toggleEditMode(type) {
+            if (type === 'translated') {
+                if (!isEditingTranslated) {
+                    const text = translatedTextEl.textContent;
+                    if (text === '...' || text.startsWith("Lỗi")) return;
+                    const textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    translatedTextEl.replaceWith(textarea);
+                    textarea.focus();
+                    isEditingTranslated = true;
+                    editTranslatedBtn.textContent = '💾';
+                    editTranslatedBtn.title = 'Lưu';
+                    textarea.addEventListener('blur', () => saveEdit('translated', textarea));
+                    textarea.addEventListener('keydown', (e) => { if(e.key === 'Enter') saveEdit('translated',textarea); });
+                } else {
+                    saveEdit('translated', translatedTextEl.parentNode.querySelector('textarea'));
+                }
+            }
+        }
+
+        function saveEdit(type, textarea) {
+            const newText = textarea.value.trim();
+            const p = document.createElement('p');
+            p.id = 'translated-text'; // Ensure it keeps the ID
+            p.textContent = newText || '...';
+            textarea.replaceWith(p); // Replace the textarea with the new p
+            isEditingTranslated = false;
+            editTranslatedBtn.textContent = '✎';
+            editTranslatedBtn.title = 'Chỉnh sửa';
+            // Optional: Re-speak if content changed meaningfully
+            // if (newText && newText !== '...') speakText(newText, targetLangSelect.value, targetVoiceSelect.value);
+        }
+
+        async function handleRefresh(type) {
+            if (isEditingTranslated) saveEdit('translated', translatedTextEl.parentNode.querySelector('textarea'));
+
+            if (type === 'original') {
+                const text = originalTextEl.value.trim();
+                if (text) await translate(text); // Re-translate original
+            } else { // translated
+                const text = translatedTextEl.textContent;
+                if (text && text !== '...' && !text.startsWith("Lỗi")) await translateBack(text); // Re-translate back
+            }
+        }
+        
+        function handleSwapLanguages() {
+            const sourceVal = sourceLangSelect.value;
+            const targetVal = targetLangSelect.value;
+            sourceLangSelect.value = targetVal;
+            targetLangSelect.value = sourceVal;
+            populateBrowserVoiceSelect(sourceLangSelect.value, sourceVoiceSelect); // Update voice selects
+            populateBrowserVoiceSelect(targetLangSelect.value, targetVoiceSelect);
+
+            const originalText = originalTextEl.value.trim();
+            const translatedTextContent = translatedTextEl.textContent;
+
+            originalTextEl.value = (translatedTextContent === '...' || translatedTextContent.startsWith("Lỗi")) ? '' : translatedTextContent;
+            
+            // Trigger translation for the new original text if it's not empty
+            // And set translated text to '...' to indicate it needs re-translation
+            if (originalTextEl.value) {
+                translatedTextEl.textContent = '...'; 
+                handleTextChange(); 
+            } else {
+                translatedTextEl.textContent = originalText || '...';
+            }
+            
+            const sourceLangName = languageMap.get(sourceLangSelect.value).displayName;
+            const targetLangName = languageMap.get(targetLangSelect.value).displayName;
+            originalTitle.textContent = `Văn bản gốc (${sourceLangName})`;
+            translatedTitle.textContent = `Bản dịch (${targetLangName})`;
+        }
+
+
+        function copyToClipboard(element) {
+            const text = element.value || element.textContent;
+            if (text && text !== '...' && !text.startsWith("Lỗi")) {
+                navigator.clipboard.writeText(text).then(showCopiedMessage)
+                .catch(err => {
+                    console.error('Lỗi sao chép: ', err);
+                    statusEl.textContent = "Không thể sao chép.";
+                });
+            }
+        }
+        function showCopiedMessage() {
+            copiedMessage.classList.add('show');
+            setTimeout(() => copiedMessage.classList.remove('show'), 2000);
+        }
+
+        // Functions for Browser's SpeechSynthesis voices (TTS Fallback)
+        function loadBrowserVoices() {
+            function setBrowserVoices() {
+                voices = window.speechSynthesis.getVoices();
+                if (voices.length > 0) {
+                    voicesReady = true;
+                    populateBrowserVoiceSelect(sourceLangSelect.value, sourceVoiceSelect);
+                    populateBrowserVoiceSelect(targetLangSelect.value, targetVoiceSelect);
+                } else setTimeout(setBrowserVoices, 250); 
+            }
+            if ('speechSynthesis' in window && typeof window.speechSynthesis.getVoices === 'function') {
+                if (window.speechSynthesis.getVoices().length > 0) setBrowserVoices();
+                else window.speechSynthesis.onvoiceschanged = setBrowserVoices;
+            } else {
+                statusEl.textContent = "Trình duyệt không hỗ trợ TTS (Browser).";
+                if(sourceVoiceSelect) sourceVoiceSelect.disabled = true;
+                if(targetVoiceSelect) targetVoiceSelect.disabled = true;
+            }
+        }
+        
+        function populateBrowserVoiceSelect(langKey, selectEl) {
+            if (!voicesReady || voices.length === 0) {
+                selectEl.innerHTML = '<option value="">Đang tải giọng nói...</option>';
+                return;
+            }
+            const langDetails = languageMap.get(langKey);
+            const targetLangForVoice = langDetails ? langDetails.ttsCode.substring(0,2) : langKey.substring(0,2);
+            const voiceOptions = getBrowserVoiceOptionsForLang(langKey);
+            let filtered = voices.filter(v => v.lang.startsWith(targetLangForVoice));
+            if (filtered.length === 0) filtered = voices.filter(v => v.lang.toLowerCase().includes(targetLangForVoice.toLowerCase()));
+
+            filtered.sort((a, b) => {
+                const aScore = voiceOptions.priorities.findIndex(p => a.name.toLowerCase().includes(p.toLowerCase()));
+                const bScore = voiceOptions.priorities.findIndex(p => b.name.toLowerCase().includes(p.toLowerCase()));
+                return (aScore === -1 ? 99 : aScore) - (bScore === -1 ? 99 : bScore);
+            });
+
+            selectEl.innerHTML = '';
+            for (const gender of ['female', 'male']) {
+                const group = document.createElement('optgroup');
+                group.label = gender === 'female' ? 'Giọng nữ (Trình duyệt)' : 'Giọng nam (Trình duyệt)';
+                let genderVoices = filtered.filter(v => 
+                    (v.gender && v.gender.toLowerCase() === gender) ||
+                    voiceOptions[gender].some(pattern => v.name.toLowerCase().includes(pattern.toLowerCase()))
+                );
+                // Simple fallback if no specific gender voices found, add remaining voices for that gender group
+                if(genderVoices.length === 0){
+                    const otherGenderKeywords = voiceOptions[gender === 'female' ? 'male' : 'female'];
+                    genderVoices = filtered.filter(v => !otherGenderKeywords.some(kw => v.name.toLowerCase().includes(kw)));
+                }
+                genderVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.name; opt.textContent = v.name;
+                    group.appendChild(opt);
+                });
+                if (group.children.length > 0) selectEl.appendChild(group);
+            }
+
+            if (selectEl.options.length === 0) { 
+                 filtered.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.name; opt.textContent = v.name;
+                    selectEl.appendChild(opt);
+                });
+                 if (selectEl.options.length === 0) selectEl.innerHTML = '<option value="">Không có giọng nói trình duyệt</option>';
+            }
+            if(selectEl.options.length > 0) {
+                const femaleOpt = Array.from(selectEl.options).find(o => o.parentNode?.label?.toLowerCase().includes('nữ'));
+                selectEl.value = femaleOpt ? femaleOpt.value : (selectEl.options[0]?.value || '');
+            }
+        }
+
+        function getBrowserVoiceOptionsForLang(langKey) { 
+            const voicePatterns = { 
+                vi: { female: ['vbee', 'fpt ai', 'viettel ai', 'female', 'nữ', 'google tiếng việt'], male: ['vbee', 'fpt ai', 'viettel ai', 'male', 'nam'], priorities: ['google', 'vbee', 'fpt', 'viettel', 'female', 'nữ', 'male', 'nam', 'microsoft'] },
+                en: { female: ['zira', 'susan', 'eva', 'female', 'samantha', 'victoria', 'karen', 'linda', 'google us english', 'google uk english female'], male: ['david', 'mark', 'male', 'google uk english male', 'daniel', 'fred', 'alex'], priorities: ['google us english', 'google uk english', 'female', 'zira', 'susan', 'eva', 'samantha', 'victoria', 'karen', 'linda', 'male', 'david', 'mark', 'daniel', 'fred', 'alex', 'microsoft'] },
+                ja: { female: ['female', 'nữ', 'kyoko', 'google 日本語', 'microsoft ayumi'], male: ['male', 'nam', 'google 日本語', 'microsoft ichiro'], priorities: ['google', 'microsoft', 'female', 'male'] },
+                ko: { female: ['female', 'nữ', 'google 한국의', 'microsoft heami'], male: ['male', 'nam', 'google 한국의'], priorities: ['google', 'microsoft', 'female', 'male'] },
+                'zh-CN': { female: ['female', 'nữ', 'google 普通话（中国大陆）', 'microsoft yaoyao'], male: ['male', 'nam', 'google 普通话（中国大陆）', 'microsoft kangkang'], priorities: ['google', 'microsoft', 'female', 'male'] },
+                fr: { female: ['female', 'nữ', 'google français', 'microsoft hortense'], male: ['male', 'nam', 'google français', 'microsoft paul'], priorities: ['google', 'microsoft', 'female', 'male'] },
+                de: { female: ['female', 'nữ', 'google deutsch', 'microsoft hedwig'], male: ['male', 'nam', 'google deutsch', 'microsoft stefan'], priorities: ['google', 'microsoft', 'female', 'male'] },
+                es: { female: ['female', 'nữ', 'google español', 'microsoft helena'], male: ['male', 'nam', 'google español', 'microsoft pablo'], priorities: ['google', 'microsoft', 'female', 'male'] }
+            };
+            return voicePatterns[langKey] || voicePatterns.en; 
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
