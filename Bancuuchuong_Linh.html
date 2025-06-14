@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng Dụng Học Bảng Cửu Chương</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        /* Tăng kích thước thẻ lên gấp 3 lần */
+        .card {
+            width: 600px; /* Chiếm nửa màn hình */
+            height: 400px; /* Tăng chiều cao */
+            margin: 20px auto;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px; /* Chữ lớn hơn */
+            cursor: pointer;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+        }
+        .hidden {
+            visibility: hidden;
+        }
+        #score {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        .btn {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Học Bảng Cửu Chương</h1>
+    <label for="multiplicationTable">Chọn bảng cửu chương: </label>
+    <select id="multiplicationTable">
+        <option value="random">Ngẫu Nhiên</option>
+        <option value="1">Bảng 1</option>
+        <option value="2">Bảng 2</option>
+        <option value="3">Bảng 3</option>
+        <option value="4">Bảng 4</option>
+        <option value="5">Bảng 5</option>
+        <option value="6">Bảng 6</option>
+        <option value="7">Bảng 7</option>
+        <option value="8">Bảng 8</option>
+        <option value="9">Bảng 9</option>
+        <option value="10">Bảng 10</option>
+    </select>
+
+    <div id="card" class="card">
+        <div id="front">?</div>
+    </div>
+
+    <div id="score">Điểm: 100</div>
+    <button class="btn" onclick="nextCard()">Tiếp Theo</button>
+
+    <script>
+        let score = 100;
+        let currentIndex = 0;
+        let currentCard = {};
+        let currentTable = "random";
+        const cardElement = document.getElementById("card");
+        const frontElement = document.getElementById("front");
+        const scoreElement = document.getElementById("score");
+
+        const tables = {
+            1: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            2: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
+            3: [3, 6, 9, 12, 15, 18, 21, 24, 27, 30],
+            4: [4, 8, 12, 16, 20, 24, 28, 32, 36, 40],
+            5: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
+            6: [6, 12, 18, 24, 30, 36, 42, 48, 54, 60],
+            7: [7, 14, 21, 28, 35, 42, 49, 56, 63, 70],
+            8: [8, 16, 24, 32, 40, 48, 56, 64, 72, 80],
+            9: [9, 18, 27, 36, 45, 54, 63, 72, 81, 90],
+            10: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+        };
+
+        function nextCard() {
+            const tableSelect = document.getElementById("multiplicationTable");
+            currentTable = tableSelect.value;
+
+            if (currentTable === "random") {
+                const randomTable = Math.floor(Math.random() * 10) + 1;
+                currentTable = randomTable.toString();
+            }
+
+            const question = `${currentTable} x ${currentIndex + 1}`;
+            const answer = tables[currentTable][currentIndex];
+                
+            currentCard = {
+                question: question,
+                answer: answer
+            };
+
+            frontElement.textContent = `${question} = ?`;
+
+            // Reset score on new card
+            score = 100;
+            scoreElement.textContent = `Điểm: ${score}`;
+
+            // Loop back to start after reaching the last question
+            currentIndex = (currentIndex + 1) % 10;
+        }
+
+        // Function to flip card and update the result
+        cardElement.onclick = function () {
+            const question = `${currentCard.question}`;
+            const answer = currentCard.answer;
+            frontElement.textContent = `${question} = ${answer}`;
+            score -= 1;
+            scoreElement.textContent = `Điểm: ${score}`;
+        };
+
+        // Initialize with the first card
+        nextCard();
+    </script>
+
+</body>
+</html>
